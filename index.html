@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="dark">
+<meta name="theme-color" content="#080808">
+<title>JW FILM — 영상 촬영 | 공연 · 뮤직비디오 · 행사</title>
+<meta name="description" content="촬영을 중심으로 활동하는 영상 제작자 JW FILM입니다. 공연, 뮤직비디오, 행사 스케치, 라이브 촬영 등 현장의 필요한 화면을 직접 촬영합니다.">
+<meta property="og:type" content="website">
+<meta property="og:locale" content="ko_KR">
+<meta property="og:site_name" content="JW FILM">
+<meta property="og:title" content="JW FILM — 영상 촬영 | 공연 · 뮤직비디오 · 행사">
+<meta property="og:description" content="촬영을 중심으로 활동하는 영상 제작자 JW FILM입니다. 공연, 뮤직비디오, 행사 스케치, 라이브 촬영 등 현장의 필요한 화면을 직접 촬영합니다.">
+<!-- 카톡 링크 미리보기: 주소가 확정되면 아래 두 줄의 주석을 풀고 주소만 바꾸세요. 대표 이미지는 assets/og-image.jpg (1200x630) 로 넣으면 됩니다. 자세한 건 SETUP.md 참고.
+<meta property="og:url" content="https://내-주소">
+<meta property="og:image" content="https://내-주소/assets/og-image.jpg">
+-->
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%236366f1'/%3E%3Ctext x='32' y='42' font-size='28' font-weight='800' text-anchor='middle' fill='white' font-family='sans-serif'%3EJW%3C/text%3E%3C/svg%3E">
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+<link rel="preconnect" href="https://i.ytimg.com">
+<link rel="stylesheet" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<link rel="stylesheet" href="assets/base.css">
+<link rel="stylesheet" href="assets/extra.css">
+</head>
+<body>
+<div id="app"><noscript><p class="nojs">이 페이지는 JavaScript가 필요합니다.</p></noscript></div>
+<script src="assets/render.js"></script>
+<script>
+(function () {
+  var app = document.getElementById('app');
+  var previewed = false;
+  var first = true;
+  function show(d) {
+    window.JWRender.mount(d, app);
+    // 내용이 나중에 그려지므로, #work 같은 주소로 들어와도 해당 위치로 이동
+    if (first && location.hash.length > 1 && window.parent === window) {
+      var t = document.getElementById(decodeURIComponent(location.hash.slice(1)));
+      if (t) t.scrollIntoView();
+    }
+    first = false;
+  }
+  // 관리자 페이지의 실시간 미리보기 (같은 사이트에서 온 메시지만 허용)
+  window.addEventListener('message', function (e) {
+    if (e.origin !== location.origin || !e.data) return;
+    if (e.data.type === 'jw-preview') { previewed = true; show(e.data.data); }
+    if (e.data.type === 'jw-scroll') {
+      var el = document.getElementById(e.data.id);
+      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  });
+  if (window.parent !== window) window.parent.postMessage({ type: 'jw-ready' }, location.origin);
+  fetch('content.json', { cache: 'no-cache' })
+    .then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); })
+    .then(function (d) { if (!previewed) show(d); })
+    .catch(function () { app.innerHTML = '<p style="padding:120px 20px;text-align:center;color:#b4b4b4">내용을 불러오지 못했습니다. 잠시 후 다시 시도해주세요.</p>'; });
+})();
+</script>
+</body>
+</html>

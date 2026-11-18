@@ -1,0 +1,465 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<meta name="color-scheme" content="dark">
+<title>JW FILM 관리자</title>
+<link rel="stylesheet" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<style>
+:root{--bg:#0b0b0d;--panel:#141418;--panel2:#1a1a20;--line:#2a2a31;--text:#f5f5f5;--muted:#a8a8b3;--accent:#6366f1;--ok:#39d98a;--err:#ff6b6b}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0}
+body{background:var(--bg);color:var(--text);font-family:"Pretendard Variable",Pretendard,-apple-system,"Apple SD Gothic Neo",system-ui,sans-serif;line-height:1.5;display:flex;flex-direction:column;-webkit-font-smoothing:antialiased}
+button,input,textarea{font:inherit;color:inherit}
+:focus-visible{outline:2px solid #fff;outline-offset:2px}
+
+.bar{display:flex;align-items:center;gap:10px;padding:10px 16px;border-bottom:1px solid var(--line);background:#0f0f12;flex:none}
+.bar h1{margin:0;font-size:16px;font-weight:800;letter-spacing:-.02em;white-space:nowrap}
+.bar .status{flex:1;min-width:0;font-size:13px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.status.ok{color:var(--ok)}.status.err{color:var(--err)}.status.dirty{color:#ffd166}
+.btn{min-height:40px;padding:0 16px;border-radius:10px;border:1px solid #34343c;background:var(--panel2);font-weight:700;font-size:14px;cursor:pointer;white-space:nowrap}
+.btn:hover{border-color:#50505a}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+.btn.primary:disabled{opacity:.5;cursor:wait}
+.btn.sm{min-height:32px;padding:0 10px;font-size:13px;border-radius:8px}
+.btn.danger{color:#ff9b9b}
+
+.main{flex:1;min-height:0;display:grid;grid-template-columns:minmax(380px,520px) 1fr}
+.editor{overflow:auto;padding:16px;border-right:1px solid var(--line)}
+.preview{min-width:0;background:#000;display:flex}
+.preview iframe{flex:1;border:0;width:100%;height:100%;background:#080808}
+.tabs{display:none}
+
+.sec{border:1px solid var(--line);border-radius:14px;background:var(--panel);margin-bottom:10px}
+.sec>summary{list-style:none;cursor:pointer;padding:14px 16px;font-weight:800;font-size:15px;display:flex;justify-content:space-between;align-items:center;min-height:48px}
+.sec>summary::-webkit-details-marker{display:none}
+.sec>summary::after{content:"+";color:var(--muted);font-size:20px;font-weight:400}
+.sec[open]>summary::after{content:"–"}
+.sec>.body{padding:2px 16px 16px;display:grid;gap:12px}
+.sub{font-size:12px;font-weight:800;letter-spacing:.08em;color:var(--muted);margin:6px 0 -4px}
+
+.f{display:grid;gap:5px}
+.fl{font-size:13px;font-weight:700;color:#d0d0d8}
+.f small{font-size:12px;color:var(--muted)}
+input[type=text],input[type=password],textarea{width:100%;padding:10px 12px;border-radius:10px;border:1px solid #34343c;background:#0e0e11;min-height:42px}
+textarea{resize:vertical;line-height:1.55}
+input:focus,textarea:focus{border-color:var(--accent);outline:none}
+
+.list{display:grid;gap:10px}
+.card{border:1px solid var(--line);border-radius:12px;background:var(--panel2)}
+.ch{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 8px 8px 12px;border-bottom:1px solid var(--line)}
+.ch strong{font-size:13px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tools{display:flex;gap:4px;flex:none}
+.cb{padding:12px;display:grid;gap:10px}
+.empty{font-size:13px;color:var(--muted);padding:6px 2px}
+.yt-state{font-size:12px;font-weight:700}
+.yt-state.ok{color:var(--ok)}.yt-state.err{color:var(--err)}
+.imgrow{display:flex;gap:12px;align-items:center}
+.imgrow img{width:120px;aspect-ratio:16/9;object-fit:cover;border-radius:8px;border:1px solid var(--line);background:#000}
+
+dialog{border:1px solid var(--line);border-radius:16px;background:var(--panel);color:var(--text);padding:0;width:min(520px,calc(100% - 24px))}
+dialog::backdrop{background:rgba(0,0,0,.7)}
+dialog form{padding:20px;display:grid;gap:12px}
+dialog h2{margin:0 0 2px;font-size:18px}
+dialog p{margin:0;font-size:13px;color:var(--muted)}
+dialog a{color:#a5a8ff}
+.row{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap}
+
+@media(max-width:900px){
+  .main{grid-template-columns:1fr}
+  .tabs{display:flex;gap:6px;padding:8px 16px;border-bottom:1px solid var(--line);flex:none}
+  .tabs .btn{flex:1}
+  .tabs .btn.on{background:#fff;color:#080808;border-color:#fff}
+  .main[data-view=edit] .preview{display:none}
+  .main[data-view=preview] .editor{display:none}
+  .editor{border-right:0}
+  .bar h1{font-size:14px}
+}
+</style>
+</head>
+<body>
+
+<div class="bar">
+  <h1>JW FILM 관리자</h1>
+  <div class="status" id="status" role="status" aria-live="polite">불러오는 중…</div>
+  <button class="btn" id="btnSettings" type="button">연결 설정</button>
+  <button class="btn primary" id="btnPublish" type="button">게시하기</button>
+</div>
+<div class="tabs" id="tabs">
+  <button class="btn on" data-v="edit" type="button">편집</button>
+  <button class="btn" data-v="preview" type="button">미리보기</button>
+</div>
+
+<div class="main" id="main" data-view="edit">
+  <div class="editor" id="editor"></div>
+  <div class="preview"><iframe id="frame" src="index.html" title="사이트 미리보기"></iframe></div>
+</div>
+
+<dialog id="dlg">
+  <form method="dialog" id="settingsForm">
+    <h2>연결 설정</h2>
+    <p>이 정보는 <b>이 기기의 브라우저에만</b> 저장되고, 사이트에는 공개되지 않습니다. 게시할 때 GitHub 저장소의 <code>content.json</code>을 수정하는 데만 쓰입니다. 만드는 법은 <b>SETUP.md</b>를 참고하세요.</p>
+    <label class="f"><span class="fl">GitHub 아이디(또는 조직명)</span><input type="text" id="sOwner" autocomplete="off" placeholder="예: jwfilm"></label>
+    <label class="f"><span class="fl">저장소 이름</span><input type="text" id="sRepo" autocomplete="off" placeholder="예: jwfilm-site"></label>
+    <label class="f"><span class="fl">브랜치</span><input type="text" id="sBranch" autocomplete="off" placeholder="main"></label>
+    <label class="f"><span class="fl">액세스 토큰</span><input type="password" id="sToken" autocomplete="off" placeholder="github_pat_…"><small>저장소 한 곳에 대해 Contents 읽기/쓰기 권한만 준 토큰을 쓰세요.</small></label>
+    <div class="row">
+      <button class="btn" type="button" id="sBackup">content.json 백업 받기</button>
+      <button class="btn" type="button" id="sClear">연결 정보 지우기</button>
+      <button class="btn" type="button" id="sCancel">닫기</button>
+      <button class="btn primary" type="button" id="sSave">저장하고 불러오기</button>
+    </div>
+  </form>
+</dialog>
+
+<input type="file" id="file" accept="image/*" hidden>
+
+<script src="assets/render.js"></script>
+<script>
+(function () {
+  'use strict';
+  var $ = function (s) { return document.querySelector(s); };
+  var data = null, dirty = false, frameReady = false, previewTimer = null;
+
+  /* ---------- 저장된 연결 정보 ---------- */
+  var KEY = 'jwfilm-admin-v1';
+  function loadCfg() { try { return JSON.parse(localStorage.getItem(KEY)) || {}; } catch (e) { return {}; } }
+  function saveCfg(c) { try { localStorage.setItem(KEY, JSON.stringify(c)); } catch (e) {} }
+  var cfg = loadCfg();
+  var configured = function () { return cfg.owner && cfg.repo && cfg.token; };
+
+  /* ---------- 상태 표시 ---------- */
+  function say(msg, cls) { var s = $('#status'); s.textContent = msg; s.className = 'status ' + (cls || ''); }
+  function changed() {
+    dirty = true; say('수정됨 — 아직 게시되지 않았어요', 'dirty');
+    clearTimeout(previewTimer); previewTimer = setTimeout(pushPreview, 150);
+    refreshTitles();
+  }
+  window.addEventListener('beforeunload', function (e) { if (dirty) { e.preventDefault(); e.returnValue = ''; } });
+
+  /* ---------- 데이터 경로 접근 ---------- */
+  function get(path) { return path.split('.').reduce(function (o, k) { return o == null ? undefined : o[k]; }, data); }
+  function set(path, val) {
+    var ks = path.split('.'), last = ks.pop();
+    ks.reduce(function (o, k) { return o[k]; }, data)[last] = val;
+  }
+
+  /* ---------- 작은 DOM 헬퍼 ---------- */
+  function h(tag, props) {
+    var e = document.createElement(tag);
+    Object.keys(props || {}).forEach(function (k) {
+      var v = props[k];
+      if (k === 'class') e.className = v;
+      else if (k.slice(0, 2) === 'on') e.addEventListener(k.slice(2), v);
+      else e.setAttribute(k, v);
+    });
+    for (var i = 2; i < arguments.length; i++) {
+      [].concat(arguments[i]).forEach(function (c) {
+        if (c == null || c === false) return;
+        e.append(c.nodeType ? c : document.createTextNode(c));
+      });
+    }
+    return e;
+  }
+
+  function field(label, path, opt) {
+    opt = opt || {};
+    var el = opt.rows ? h('textarea', { rows: opt.rows }) : h('input', { type: 'text' });
+    el.value = get(path) == null ? '' : get(path);
+    if (opt.placeholder) el.placeholder = opt.placeholder;
+    var extra = opt.status ? h('span', { class: 'yt-state' }) : null;
+    function upd() { if (extra) opt.status(el.value, extra); }
+    el.addEventListener('input', function () { set(path, el.value); upd(); changed(); });
+    upd();
+    return h('label', { class: 'f' }, h('span', { class: 'fl' }, label), el, extra, opt.hint ? h('small', {}, opt.hint) : null);
+  }
+
+  function btn(txt, fn, cls) { return h('button', { class: 'btn sm ' + (cls || ''), type: 'button', onclick: fn }, txt); }
+
+  function refreshTitles() {
+    document.querySelectorAll('[data-tp]').forEach(function (el) {
+      var v = get(el.getAttribute('data-tp'));
+      el.textContent = (v && String(v).trim()) || el.getAttribute('data-fb');
+    });
+  }
+
+  /* 목록 편집기: 추가 / 삭제 / 위·아래 이동 */
+  function listEditor(path, o) {
+    var wrap = h('div', { class: 'list' });
+    function draw() {
+      wrap.replaceChildren();
+      var arr = get(path);
+      if (!arr.length) wrap.append(h('div', { class: 'empty' }, o.emptyText || '아직 항목이 없어요.'));
+      arr.forEach(function (item, i) {
+        var ip = path + '.' + i;
+        var tp = o.titleKey ? ip + '.' + o.titleKey : ip;
+        var head = h('div', { class: 'ch' },
+          h('strong', { 'data-tp': tp, 'data-fb': (o.label || '항목') + ' ' + (i + 1) }, ''),
+          h('span', { class: 'tools' },
+            i > 0 ? btn('↑', function () { swap(i, i - 1); }) : null,
+            i < arr.length - 1 ? btn('↓', function () { swap(i, i + 1); }) : null,
+            btn('삭제', function () { if (confirm('이 항목을 삭제할까요?')) { arr.splice(i, 1); changed(); draw(); } }, 'danger')));
+        wrap.append(h('div', { class: 'card' }, head, h('div', { class: 'cb' }, o.body(ip, item, i))));
+      });
+      wrap.append(h('div', {}, btn('＋ ' + (o.addLabel || '추가'), function () { arr.push(o.make()); changed(); draw(); })));
+      refreshTitles();
+    }
+    function swap(a, b) { var arr = get(path), t = arr[a]; arr[a] = arr[b]; arr[b] = t; changed(); draw(); }
+    draw();
+    return wrap;
+  }
+
+  function section(id, title, kids, target) {
+    var d = h('details', { class: 'sec' }, h('summary', {}, title), h('div', { class: 'body' }, kids));
+    d.addEventListener('toggle', function () { if (d.open && target) scrollPreview(target); });
+    return d;
+  }
+
+  /* ---------- 편집 화면 만들기 ---------- */
+  function ytState(v, el) {
+    if (!v.trim()) { el.textContent = ''; el.className = 'yt-state'; return; }
+    var ok = !!window.JWRender.ytId(v);
+    el.textContent = ok ? '✓ 영상 인식됨 — 썸네일은 자동으로 나와요' : '✕ YouTube 영상 주소가 아니에요';
+    el.className = 'yt-state ' + (ok ? 'ok' : 'err');
+  }
+
+  function build() {
+    var ed = $('#editor');
+    ed.replaceChildren();
+
+    ed.append(
+      section('works', '🎬 작업 영상 (포트폴리오)', [
+        h('p', { class: 'empty' }, 'YouTube 영상 주소를 붙여넣으면 썸네일이 자동으로 만들어지고, 사이트에서 바로 재생돼요. 분류를 2개 이상 쓰면 필터 버튼이 생겨요.'),
+        listEditor('work.items', {
+          label: '영상', titleKey: 'title', addLabel: '영상 추가', emptyText: '등록된 영상이 없어요. 영상을 추가하면 작업 섹션에 카드로 나타나요.',
+          make: function () { return { url: '', title: '', category: '', desc: '' }; },
+          body: function (p) {
+            return [
+              field('YouTube 주소', p + '.url', { placeholder: 'https://www.youtube.com/watch?v=…', status: ytState }),
+              field('제목', p + '.title'),
+              field('분류 (선택)', p + '.category', { placeholder: '예: 공연, 뮤직비디오, 행사' }),
+              field('한 줄 설명 (선택)', p + '.desc')
+            ];
+          }
+        })
+      ], 'work'),
+
+      section('gear', '🎥 장비', [
+        field('섹션 제목', 'gear.title'),
+        field('안내 문구', 'gear.lead', { rows: 2 }),
+        h('div', { class: 'sub' }, '장비 그룹'),
+        listEditor('gear.groups', {
+          label: '그룹', titleKey: 'category', addLabel: '그룹 추가',
+          make: function () { return { category: '', items: [{ name: '', note: '' }] }; },
+          body: function (p) {
+            return [
+              field('그룹 이름', p + '.category', { placeholder: '예: CAMERA' }),
+              listEditor(p + '.items', {
+                label: '장비', titleKey: 'name', addLabel: '장비 추가',
+                make: function () { return { name: '', note: '' }; },
+                body: function (q) { return [field('장비 이름', q + '.name'), field('메모 (선택)', q + '.note', { placeholder: '예: 32GB RAM / 512GB SSD' })]; }
+              })
+            ];
+          }
+        })
+      ], 'gear'),
+
+      section('hero', '🏠 메인 화면', [
+        field('상단 작은 글씨', 'hero.eyebrow'),
+        field('큰 제목 1줄', 'hero.line1'),
+        field('큰 제목 2줄 (그라데이션)', 'hero.line2'),
+        field('소개 문장', 'hero.copy', { rows: 4 })
+      ], 'top'),
+
+      section('about', '🙋 소개', [
+        field('섹션 제목', 'about.title'),
+        h('div', { class: 'sub' }, '소개 문장'),
+        listEditor('about.statements', {
+          label: '문장', addLabel: '문장 추가', make: function () { return ''; },
+          body: function (p) { return [field('내용', p, { rows: 3, hint: '**이렇게 감싸면** 굵은 글씨가 돼요.' })]; }
+        }),
+        field('FOCUS 칸', 'about.focus'),
+        field('FIELD 칸', 'about.field')
+      ], 'about'),
+
+      section('fields', '📷 촬영 분야', [
+        field('섹션 제목', 'fields.title'),
+        field('안내 문구', 'fields.lead', { rows: 2 }),
+        listEditor('fields.items', {
+          label: '분야', titleKey: 'title', addLabel: '분야 추가',
+          make: function () { return { title: '', desc: '' }; },
+          body: function (p) { return [field('이름', p + '.title'), field('설명', p + '.desc', { rows: 2 })]; }
+        })
+      ], 'field'),
+
+      section('faq', '❓ 자주 묻는 질문', [
+        listEditor('faq', {
+          label: '질문', titleKey: 'q', addLabel: '질문 추가',
+          make: function () { return { q: '', a: '' }; },
+          body: function (p) {
+            return [field('질문', p + '.q'), field('답변', p + '.a', { rows: 4, hint: '링크: [카카오톡 오픈채팅](kakao) · [YouTube 채널](youtube) · [글자](https://주소)' })];
+          }
+        })
+      ], 'faq'),
+
+      section('links', '🔗 연락처·SNS 링크', [
+        field('카카오톡 오픈채팅 주소', 'links.kakao'),
+        field('YouTube 채널 주소', 'links.youtube'),
+        h('div', { class: 'sub' }, '인스타그램 (공식)'),
+        field('표시 이름', 'links.instaMainLabel'), field('아이디', 'links.instaMainHandle'), field('주소', 'links.instaMain'),
+        h('div', { class: 'sub' }, '인스타그램 (대표 개인)'),
+        field('표시 이름', 'links.instaDirLabel'), field('아이디', 'links.instaDirHandle'), field('주소', 'links.instaDir')
+      ], 'contact'),
+
+      section('contact', '✉️ 문의 영역 · 하단 정보', [
+        field('문의 제목', 'contact.title', { rows: 2 }),
+        field('문의 안내 문구', 'contact.lead', { rows: 2 }),
+        field('브랜드 이름', 'site.brand'),
+        field('상호', 'site.legalName'),
+        field('사업자등록번호', 'site.bizNo', { hint: '비우면 하단에 표시되지 않아요.' })
+      ], 'contact'),
+
+      section('feature', '🖼 채널 소개 카드 이미지', [
+        h('div', { class: 'imgrow' },
+          h('img', { id: 'featImg', alt: '현재 이미지', src: get('work.featureImage') || '' }),
+          btn('이미지 바꾸기', pickImage)),
+        field('카드 제목', 'work.featureTitle', { rows: 2 }),
+        field('카드 설명', 'work.featureDesc', { rows: 2 }),
+        field('작업 섹션 제목', 'work.title'),
+        field('작업 섹션 안내 문구', 'work.lead', { rows: 2 })
+      ], 'work')
+    );
+    // 영상 섹션을 기본으로 열어 둔다
+    ed.querySelector('details').open = true;
+    refreshTitles();
+  }
+
+  /* ---------- 미리보기 ---------- */
+  var frame = $('#frame');
+  function pushPreview() { if (frameReady && data) frame.contentWindow.postMessage({ type: 'jw-preview', data: data }, location.origin); }
+  function scrollPreview(id) { if (frameReady) frame.contentWindow.postMessage({ type: 'jw-scroll', id: id }, location.origin); }
+  window.addEventListener('message', function (e) {
+    if (e.origin === location.origin && e.data && e.data.type === 'jw-ready' && e.source === frame.contentWindow) { frameReady = true; pushPreview(); }
+  });
+
+  /* ---------- GitHub API ---------- */
+  function api(path, opts) {
+    opts = opts || {};
+    var url = 'https://api.github.com/repos/' + encodeURIComponent(cfg.owner) + '/' + encodeURIComponent(cfg.repo) + '/contents/' + path;
+    var headers = { Authorization: 'Bearer ' + cfg.token, 'X-GitHub-Api-Version': '2022-11-28', Accept: opts.raw ? 'application/vnd.github.raw+json' : 'application/vnd.github+json' };
+    if (opts.body) headers['Content-Type'] = 'application/json';
+    return fetch(url + (opts.method === 'PUT' ? '' : '?ref=' + encodeURIComponent(cfg.branch || 'main')), {
+      method: opts.method || 'GET', headers: headers, cache: 'no-store', body: opts.body ? JSON.stringify(opts.body) : undefined
+    });
+  }
+  function explain(res) {
+    if (res.status === 401) return '토큰이 올바르지 않거나 만료됐어요. 연결 설정에서 다시 넣어주세요.';
+    if (res.status === 403) return '이 토큰에 쓰기 권한이 없어요. Contents 권한을 "Read and write"로 만들어주세요.';
+    if (res.status === 404) return '저장소·브랜치·파일을 찾지 못했어요. 연결 설정의 아이디/저장소 이름을 확인해주세요.';
+    if (res.status === 409 || res.status === 422) return '저장소가 그 사이에 바뀌었어요. 한 번 더 눌러보세요.';
+    return 'GitHub 오류 (' + res.status + ')';
+  }
+  function toB64(bytes) { var s = '', n = 0x8000; for (var i = 0; i < bytes.length; i += n) s += String.fromCharCode.apply(null, bytes.subarray(i, i + n)); return btoa(s); }
+
+  /* ---------- 불러오기 ---------- */
+  async function load() {
+    say('불러오는 중…');
+    try {
+      var d;
+      if (configured()) {
+        var r = await api('content.json', { raw: true });
+        if (!r.ok) throw new Error(explain(r));
+        d = await r.json();
+        say(dirty ? '' : '최신 내용을 불러왔어요', 'ok');
+      } else {
+        var r2 = await fetch('content.json', { cache: 'no-store' });
+        if (!r2.ok) throw new Error('content.json을 불러오지 못했어요');
+        d = await r2.json();
+        say('연결 설정 전이에요 — 우측 상단 "연결 설정"에서 토큰을 넣어야 게시할 수 있어요', 'dirty');
+      }
+      data = d; dirty = false;
+      if (!data.work) data.work = {}; if (!data.work.items) data.work.items = [];
+      build(); pushPreview();
+    } catch (err) {
+      say(err.message || '불러오기 실패', 'err');
+      if (!data) { try { var r3 = await fetch('content.json', { cache: 'no-store' }); data = await r3.json(); build(); pushPreview(); } catch (e) {} }
+    }
+  }
+
+  /* ---------- 게시 ---------- */
+  async function publish() {
+    if (!configured()) { openSettings(); say('먼저 연결 설정을 해주세요', 'err'); return; }
+    var bad = data.work.items.filter(function (w) { return w.url && !window.JWRender.ytId(w.url); });
+    if (bad.length && !confirm('YouTube 주소가 올바르지 않은 영상 ' + bad.length + '개는 사이트에 나오지 않아요. 그래도 게시할까요?')) return;
+    var b = $('#btnPublish'); b.disabled = true; say('게시 중…');
+    try {
+      var cur = await api('content.json');
+      if (!cur.ok) throw new Error(explain(cur));
+      var sha = (await cur.json()).sha;
+      var text = JSON.stringify(data, null, 2) + '\n';
+      var res = await api('content.json', { method: 'PUT', body: { message: '관리자 페이지에서 내용 수정', content: toB64(new TextEncoder().encode(text)), sha: sha, branch: cfg.branch || 'main' } });
+      if (!res.ok) throw new Error(explain(res));
+      dirty = false; say('✓ 게시 완료 — 1~2분 뒤 사이트에 반영돼요', 'ok');
+    } catch (err) { say(err.message || '게시 실패', 'err'); }
+    b.disabled = false;
+  }
+
+  /* ---------- 이미지 업로드 ---------- */
+  function pickImage() {
+    if (!configured()) { openSettings(); say('이미지를 올리려면 먼저 연결 설정을 해주세요', 'err'); return; }
+    $('#file').value = ''; $('#file').click();
+  }
+  $('#file').addEventListener('change', async function (e) {
+    var f = e.target.files[0]; if (!f) return;
+    say('이미지 올리는 중…');
+    try {
+      var bmp = await createImageBitmap(f), w = Math.min(1600, bmp.width), hgt = Math.round(bmp.height * w / bmp.width);
+      var cv = document.createElement('canvas'); cv.width = w; cv.height = hgt; cv.getContext('2d').drawImage(bmp, 0, 0, w, hgt);
+      var blob = await new Promise(function (ok) { cv.toBlob(ok, 'image/jpeg', 0.85); });
+      var buf = new Uint8Array(await blob.arrayBuffer());
+      var name = 'assets/feature-' + Date.now() + '.jpg';
+      var res = await api(name, { method: 'PUT', body: { message: '채널 카드 이미지 추가', content: toB64(buf), branch: cfg.branch || 'main' } });
+      if (!res.ok) throw new Error(explain(res));
+      set('work.featureImage', name);
+      $('#featImg').src = URL.createObjectURL(blob);
+      changed(); say('이미지를 올렸어요 — "게시하기"를 눌러야 사이트에 적용돼요', 'dirty');
+    } catch (err) { say(err.message || '이미지 업로드 실패', 'err'); }
+  });
+
+  /* ---------- 설정 창 ---------- */
+  var dlg = $('#dlg');
+  function openSettings() {
+    $('#sOwner').value = cfg.owner || ''; $('#sRepo').value = cfg.repo || ''; $('#sBranch').value = cfg.branch || 'main'; $('#sToken').value = cfg.token || '';
+    dlg.showModal();
+  }
+  $('#btnSettings').addEventListener('click', openSettings);
+  $('#sCancel').addEventListener('click', function () { dlg.close(); });
+  $('#sSave').addEventListener('click', function () {
+    cfg = { owner: $('#sOwner').value.trim(), repo: $('#sRepo').value.trim(), branch: $('#sBranch').value.trim() || 'main', token: $('#sToken').value.trim() };
+    saveCfg(cfg); dlg.close();
+    if (!dirty || confirm('아직 게시하지 않은 수정이 있어요. 저장소의 최신 내용으로 덮어쓸까요?')) { dirty = false; load(); }
+  });
+  $('#sClear').addEventListener('click', function () {
+    if (!confirm('이 기기에 저장된 연결 정보를 지울까요?')) return;
+    cfg = {}; saveCfg(cfg); dlg.close(); say('연결 정보를 지웠어요', 'dirty');
+  });
+  $('#sBackup').addEventListener('click', function () {
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob([JSON.stringify(data, null, 2) + '\n'], { type: 'application/json' }));
+    a.download = 'content.json'; a.click();
+  });
+
+  $('#btnPublish').addEventListener('click', publish);
+  $('#tabs').addEventListener('click', function (e) {
+    var v = e.target.getAttribute && e.target.getAttribute('data-v'); if (!v) return;
+    $('#main').setAttribute('data-view', v);
+    document.querySelectorAll('#tabs .btn').forEach(function (b) { b.classList.toggle('on', b === e.target); });
+  });
+
+  load();
+})();
+</script>
+</body>
+</html>

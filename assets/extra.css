@@ -1,0 +1,31 @@
+/* base.css 위에 얹는 추가 스타일: 영상 그리드, 라이트박스, 필터, 등장 효과 */
+.reveal{opacity:0;transform:translateY(18px);transition:opacity .6s ease,transform .6s ease}
+.reveal.in{opacity:1;transform:none}
+@media(prefers-reduced-motion:reduce){.reveal{opacity:1;transform:none}}
+noscript .nojs{padding:120px 20px;text-align:center;color:#b4b4b4}
+
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 20px}
+.chip{min-height:40px;padding:0 16px;border-radius:999px;border:1px solid #34343a;background:#16161a;color:#d6d6d6;font:inherit;font-size:14px;font-weight:700;cursor:pointer}
+.chip.on{background:#fff;color:#080808;border-color:#fff}
+
+.vgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:16px}
+.vcard{display:flex;flex-direction:column;gap:14px;padding:0;border:0;background:none;color:inherit;font:inherit;text-align:left;cursor:pointer;min-width:0}
+.vcard[hidden]{display:none}
+.vthumb{position:relative;display:block;aspect-ratio:16/9;border-radius:18px;overflow:hidden;background:#16161a;border:1px solid var(--line)}
+.vthumb img{width:100%;height:100%;object-fit:cover;transition:transform .35s ease}
+.vplay{position:absolute;right:14px;bottom:14px;width:44px;height:44px;border-radius:50%;display:grid;place-items:center;background:rgba(0,0,0,.65);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);color:#fff}
+.vplay svg{width:20px;height:20px}
+.vmeta{display:flex;flex-direction:column;gap:4px;padding:0 4px}
+.vcat{font-size:12px;font-weight:800;letter-spacing:.1em;color:var(--dim)}
+.vtitle{font-size:18px;font-weight:700;line-height:1.4;letter-spacing:-.02em;color:#fff}
+.vdesc{font-size:14px;color:var(--muted);line-height:1.55}
+@media(hover:hover){.vcard:hover .vthumb img{transform:scale(1.04)}}
+@media(max-width:860px){.vgrid{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:560px){.vgrid{grid-template-columns:1fr}}
+.vgrid + .archive{margin-top:28px}
+
+.lightbox{position:fixed;inset:0;z-index:2000;display:none;align-items:center;justify-content:center;padding:max(16px,env(safe-area-inset-top)) 16px max(16px,env(safe-area-inset-bottom));background:rgba(0,0,0,.88);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px)}
+.lightbox.open{display:flex}
+.lb-frame{width:min(1100px,100%);aspect-ratio:16/9;border-radius:16px;overflow:hidden;background:#000}
+.lb-frame iframe{width:100%;height:100%;border:0;display:block}
+.lb-close{position:absolute;top:max(12px,env(safe-area-inset-top));right:16px;width:48px;height:48px;border-radius:50%;border:1px solid #3a3a42;background:#16161a;color:#fff;font-size:28px;line-height:1;cursor:pointer}
